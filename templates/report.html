@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}GeneGuard Health Report{% endblock %}
+
+{% block content %}
+<div class="action-box" style="margin-bottom: 1.5rem; justify-content: flex-end;">
+    <button onclick="window.print()" class="btn-submit" style="width: auto; padding: 0.7rem 1.5rem; font-size: 0.95rem;">
+        🖨️ Print / Save as PDF
+    </button>
+    <a href="/" class="btn-secondary" style="padding: 0.7rem 1.5rem; font-size: 0.95rem;">
+        ← Back to Assessment
+    </a>
+</div>
+
+<article class="report-paper">
+    <!-- Report Header -->
+    <header class="report-header">
+        <div>
+            <div style="font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: var(--accent-blue); font-weight: 700;">CONFIDENTIAL HEALTH REPORT</div>
+            <h1 class="report-title">GeneGuard Assessment</h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Cardiovascular Disease Risk Evaluation Report</p>
+        </div>
+        <div class="report-meta">
+            <div><strong>Report ID:</strong> GG-{{ range(100000, 999999) | random }}</div>
+            <div><strong>Date:</strong> <span id="report-date"></span></div>
+            <div><strong>Engine:</strong> Random Forest ML + SHAP</div>
+        </div>
+    </header>
+
+    <!-- Report Grid -->
+    <div class="report-grid">
+        <!-- Patient Vitals Block -->
+        <div class="report-block">
+            <h2 class="report-block-title">Patient Profile & Vitals</h2>
+            <table class="report-table">
+                <tr>
+                    <td>Age</td>
+                    <td>{{ result.patient_data.age }} years</td>
+                </tr>
+                <tr>
+                    <td>Gender</td>
+                    <td>{{ result.patient_data.gender }}</td>
+                </tr>
+                <tr>
+                    <td>Height</td>
+                    <td>{{ result.patient_data.height_cm }} cm ({{ result.patient_data.height_ft_in }})</td>
+                </tr>
+                <tr>
+                    <td>Weight</td>
+                    <td>{{ result.patient_data.weight_kg }} kg ({{ result.patient_data.weight_lbs }} lbs)</td>
+                </tr>
+                <tr>
+                    <td>Body Mass Index (BMI)</td>
+                    <td>{{ result.patient_data.bmi }} kg/m²</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Clinical Indicators & Lifestyle Block -->
+        <div class="report-block">
+            <h2 class="report-block-title">Cardiovascular Indicators</h2>
+            <table class="report-table">
+                <tr>
+                    <td>Systolic Blood Pressure</td>
+                    <td>{{ result.patient_data.ap_hi }} mmHg</td>
+                </tr>
+                <tr>
+                    <td>Diastolic Blood Pressure</td>
+                    <td>{{ result.patient_data.ap_lo }} mmHg</td>
+                </tr>
+                <tr>
+                    <td>Pulse Pressure</td>
+                    <td>{{ result.patient_data.pulse_pressure }} mmHg</td>
+                </tr>
+                <tr>
+                    <td>Cholesterol Level</td>
+                    <td>{{ result.patient_data.cholesterol }}</td>
+                </tr>
+                <tr>
+                    <td>Glucose Level</td>
+                    <td>{{ result.patient_data.gluc }}</td>
+                </tr>
+                <tr>
+                    <td>Smoking Status</td>
+                    <td>{{ result.patient_data.smoke }}</td>
+                </tr>
+                <tr>
+                    <td>Alcohol Intake</td>
+                    <td>{{ result.patient_data.alco }}</td>
+                </tr>
+                <tr>
+                    <td>Physical Activity</td>
+                    <td>{{ result.patient_data.active }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Model Analysis & Assessment Summary -->
+    <div class="report-block" style="margin-bottom: 2rem; border-left: 4px solid var(--accent-blue);">
+        <h2 class="report-block-title">Machine Learning Risk Assessment Summary</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <span style="font-size: 0.9rem; color: var(--text-muted); display: block;">Predicted Risk Level:</span>
+                <span class="risk-badge {{ result.risk_category }}" style="margin-bottom: 0; padding: 4px 14px; font-size: 0.95rem;">
+                    {{ result.risk_label }}
+                </span>
+            </div>
+            <div>
+                <span style="font-size: 0.9rem; color: var(--text-muted); display: block;">Model Predicted Probability:</span>
+                <span style="font-size: 1.6rem; font-weight: 800; color: var(--primary-navy);">{{ result.risk_percentage }}%</span>
+            </div>
+            <div>
+                <span style="font-size: 0.9rem; color: var(--text-muted); display: block;">Decision Threshold:</span>
+                <span style="font-weight: 600;">{{ result.threshold }}</span>
+            </div>
+        </div>
+        <p style="font-size: 0.95rem; color: #475569; line-height: 1.5;">
+            {{ result.risk_description }}
+        </p>
+    </div>
+
+    <!-- Feature Attribution & Evaluation Breakdown -->
+    {% if result.explanation %}
+    <div class="report-block" style="margin-bottom: 2rem;">
+        <h2 class="report-block-title">Key Factor Evaluation Analysis (SHAP Impact)</h2>
+        <table class="report-table">
+            <thead>
+                <tr style="text-align: left; font-weight: 700; color: var(--primary-navy); border-bottom: 2px solid #cbd5e1;">
+                    <td style="padding: 6px 0;">Health Metric / Factor</td>
+                    <td style="padding: 6px 0; text-align: center;">SHAP Contribution</td>
+                    <td style="padding: 6px 0; text-align: right;">Risk Direction</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in result.explanation %}
+                <tr>
+                    <td style="font-weight: 600;">{{ item.feature }}</td>
+                    <td style="text-align: center;">{% if item.shap_value > 0 %}+{% endif %}{{ item.shap_value }}</td>
+                    <td style="text-align: right;">
+                        <span class="risk-badge {% if item.direction == 'increases_risk' %}high{% else %}low{% endif %}" style="margin-bottom: 0; padding: 2px 8px; font-size: 0.75rem; border-radius: 8px;">
+                            {{ item.impact_label }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Mandatory Medical Disclaimer -->
+    <div class="disclaimer-box">
+        <span class="disclaimer-icon">⚕️</span>
+        <div>
+            <strong>Important Clinical Notice:</strong> This report is generated using a supervised machine-learning model for informational and educational purposes only. It is <u>not</u> a medical diagnosis and should not replace evaluation, diagnosis, or treatment by a qualified healthcare professional.
+        </div>
+    </div>
+</article>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('report-date').textContent = dateStr;
+    });
+</script>
+{% endblock %}

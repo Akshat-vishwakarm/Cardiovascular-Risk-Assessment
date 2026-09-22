@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - GeneGuard{% endblock %}
+
+{% block content %}
+<section class="result-card" style="padding: 4rem 2rem;">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+    <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 0.5rem;">Page Not Found</h1>
+    <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 2rem;">
+        We couldn't find the page you were looking for. Please check the URL or return to the main assessment page.
+    </p>
+    <a href="/" class="btn-submit" style="display: inline-flex; width: auto; padding: 0.85rem 2rem;">
+        Return to Home Assessment
+    </a>
+</section>
+{% endblock %}

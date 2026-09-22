@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}GeneGuard - Cardiovascular Assessment{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-card">
+    <h1 class="hero-title">Cardiovascular Risk Assessment</h1>
+    <p class="hero-subtitle">
+        Evaluate your cardiovascular health risk profile powered by a trained Machine Learning model. Enter your health metrics below for an instant, confidential risk analysis.
+    </p>
+    <div class="hero-badges">
+        <div class="badge-item"><span>✓</span> Trained ML Model (73% Test Accuracy)</div>
+        <div class="badge-item"><span>✓</span> Instant Risk Evaluation</div>
+        <div class="badge-item"><span>✓</span> Automatic Unit Conversion (cm/ft, kg/lbs)</div>
+    </div>
+</section>
+
+<!-- Error Alert Banner -->
+<div id="error-banner" class="error-banner {% if error %}show{% endif %}">
+    {% if error %}
+        {{ error }}
+    {% endif %}
+</div>
+
+<!-- Assessment Form Container -->
+<section id="assessment" class="form-card">
+    <form id="assessment-form" action="/predict" method="POST">
+        
+        <!-- Section 1: Basic Personal Information -->
+        <div class="form-section-title">
+            <span class="section-num">1</span> Personal Information
+        </div>
+
+        <div class="form-grid">
+            <!-- Age -->
+            <div class="field-group">
+                <label for="age" class="field-label">
+                    Age <span class="required-star">*</span>
+                </label>
+                <div class="unit-addon">
+                    <input type="number" id="age" name="age" class="field-input" placeholder="e.g. 50" min="1" max="120" value="{{ form_data.age if form_data else '' }}" required>
+                    <span class="unit-tag">years</span>
+                </div>
+            </div>
+
+            <!-- Gender -->
+            <div class="field-group">
+                <label class="field-label">
+                    Gender <span class="required-star">*</span>
+                </label>
+                <div class="radio-group">
+                    <div class="radio-card">
+                        <input type="radio" id="gender-male" name="gender" value="male" {% if not form_data or form_data.gender == 'male' %}checked{% endif %} required>
+                        <label for="gender-male" class="radio-label">Male</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" id="gender-female" name="gender" value="female" {% if form_data and form_data.gender == 'female' %}checked{% endif %}>
+                        <label for="gender-female" class="radio-label">Female</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Height with Unit Selector (cm or ft/in) -->
+            <div class="field-group">
+                <label for="height" class="field-label">
+                    Height <span class="required-star">*</span>
+                </label>
+                <div style="display: flex; gap: 8px;">
+                    <!-- CM Container -->
+                    <div id="height-cm-container" class="unit-addon" style="flex: 1;">
+                        <input type="number" id="height" name="height" class="field-input" placeholder="e.g. 170" min="50" max="250" step="0.5" value="{{ form_data.height if form_data else '' }}">
+                        <span class="unit-tag">cm</span>
+                    </div>
+
+                    <!-- Feet / Inches Container -->
+                    <div id="height-ft-container" style="display: none; flex: 1; gap: 8px;">
+                        <div class="unit-addon" style="flex: 1;">
+                            <input type="number" id="height_ft" name="height_ft" class="field-input" placeholder="ft" min="1" max="8" step="1" value="{{ form_data.height_ft if form_data else '' }}">
+                            <span class="unit-tag">ft</span>
+                        </div>
+                        <div class="unit-addon" style="flex: 1;">
+                            <input type="number" id="height_in" name="height_in" class="field-input" placeholder="in" min="0" max="11" step="0.5" value="{{ form_data.height_in if form_data else '' }}">
+                            <span class="unit-tag">in</span>
+                        </div>
+                    </div>
+
+                    <!-- Unit Selector -->
+                    <select id="height_unit" name="height_unit" class="field-select" style="width: 100px; font-weight: 600; cursor: pointer;">
+                        <option value="cm" {% if not form_data or form_data.height_unit == 'cm' %}selected{% endif %}>cm</option>
+                        <option value="ft" {% if form_data and form_data.height_unit == 'ft' %}selected{% endif %}>ft / in</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Weight with Unit Selector (kg or lbs) -->
+            <div class="field-group">
+                <label for="weight" class="field-label">
+                    Weight <span class="required-star">*</span>
+                </label>
+                <div style="display: flex; gap: 8px;">
+                    <div class="unit-addon" style="flex: 1;">
+                        <input type="number" id="weight" name="weight" class="field-input" placeholder="e.g. 70" min="10" max="700" step="0.5" value="{{ form_data.weight if form_data else '' }}" required>
+                        <span id="weight-unit-tag" class="unit-tag">kg</span>
+                    </div>
+                    <!-- Unit Selector -->
+                    <select id="weight_unit" name="weight_unit" class="field-select" style="width: 100px; font-weight: 600; cursor: pointer;">
+                        <option value="kg" {% if not form_data or form_data.weight_unit == 'kg' %}selected{% endif %}>kg</option>
+                        <option value="lbs" {% if form_data and form_data.weight_unit == 'lbs' %}selected{% endif %}>lbs</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Automatically Calculated BMI -->
+            <div class="field-group">
+                <label class="field-label">Body Mass Index (BMI)</label>
+                <div class="metric-box">
+                    <div class="metric-title">Automatically Calculated</div>
+                    <div id="bmi-value" class="metric-value">--.-</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Section 2: Blood Pressure -->
+        <div class="form-section-title">
+            <span class="section-num">2</span> Blood Pressure
+        </div>
+
+        <div class="form-grid">
+            <!-- Systolic BP -->
+            <div class="field-group">
+                <label for="ap_hi" class="field-label">
+                    Systolic Blood Pressure <span class="required-star">*</span>
+                </label>
+                <div class="unit-addon">
+                    <input type="number" id="ap_hi" name="ap_hi" class="field-input" placeholder="e.g. 120" min="60" max="250" value="{{ form_data.ap_hi if form_data else '' }}" required>
+                    <span class="unit-tag">mmHg</span>
+                </div>
+            </div>
+
+            <!-- Diastolic BP -->
+            <div class="field-group">
+                <label for="ap_lo" class="field-label">
+                    Diastolic Blood Pressure <span class="required-star">*</span>
+                </label>
+                <div class="unit-addon">
+                    <input type="number" id="ap_lo" name="ap_lo" class="field-input" placeholder="e.g. 80" min="30" max="180" value="{{ form_data.ap_lo if form_data else '' }}" required>
+                    <span class="unit-tag">mmHg</span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Section 3: Health & Lifestyle Information -->
+        <div class="form-section-title">
+            <span class="section-num">3</span> Health & Lifestyle Information
+        </div>
+
+        <div class="form-grid">
+            <!-- Cholesterol -->
+            <div class="field-group">
+                <label for="cholesterol" class="field-label">Cholesterol Level</label>
+                <select id="cholesterol" name="cholesterol" class="field-select">
+                    <option value="normal" {% if not form_data or form_data.cholesterol == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="above_normal" {% if form_data and form_data.cholesterol == 'above_normal' %}selected{% endif %}>Above Normal</option>
+                    <option value="high" {% if form_data and form_data.cholesterol == 'high' %}selected{% endif %}>High (Well Above Normal)</option>
+                </select>
+            </div>
+
+            <!-- Glucose -->
+            <div class="field-group">
+                <label for="gluc" class="field-label">Glucose Level</label>
+                <select id="gluc" name="gluc" class="field-select">
+                    <option value="normal" {% if not form_data or form_data.gluc == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="above_normal" {% if form_data and form_data.gluc == 'above_normal' %}selected{% endif %}>Above Normal</option>
+                    <option value="high" {% if form_data and form_data.gluc == 'high' %}selected{% endif %}>High (Well Above Normal)</option>
+                </select>
+            </div>
+
+            <!-- Smoking -->
+            <div class="field-group">
+                <label class="field-label">Smoking Status</label>
+                <div class="radio-group">
+                    <div class="radio-card">
+                        <input type="radio" id="smoke-no" name="smoke" value="no" {% if not form_data or form_data.smoke == 'no' %}checked{% endif %}>
+                        <label for="smoke-no" class="radio-label">Non-Smoker</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" id="smoke-yes" name="smoke" value="yes" {% if form_data and form_data.smoke == 'yes' %}checked{% endif %}>
+                        <label for="smoke-yes" class="radio-label">Smoker</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alcohol -->
+            <div class="field-group">
+                <label class="field-label">Alcohol Consumption</label>
+                <div class="radio-group">
+                    <div class="radio-card">
+                        <input type="radio" id="alco-no" name="alco" value="no" {% if not form_data or form_data.alco == 'no' %}checked{% endif %}>
+                        <label for="alco-no" class="radio-label">No</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" id="alco-yes" name="alco" value="yes" {% if form_data and form_data.alco == 'yes' %}checked{% endif %}>
+                        <label for="alco-yes" class="radio-label">Yes</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Activity -->
+            <div class="field-group">
+                <label class="field-label">Physical Activity</label>
+                <div class="radio-group">
+                    <div class="radio-card">
+                        <input type="radio" id="active-yes" name="active" value="yes" {% if not form_data or form_data.active == 'yes' %}checked{% endif %}>
+                        <label for="active-yes" class="radio-label">Active</label>
+                    </div>
+                    <div class="radio-card">
+                        <input type="radio" id="active-no" name="active" value="no" {% if form_data and form_data.active == 'no' %}checked{% endif %}>
+                        <label for="active-no" class="radio-label">Inactive</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit">
+            <span>Analyze My Risk</span> →
+        </button>
+
+    </form>
+</section>
+{% endblock %}

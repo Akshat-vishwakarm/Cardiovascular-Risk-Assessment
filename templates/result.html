@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}GeneGuard - Assessment Result{% block title_suffix %}{% endblock %}{% endblock %}
+
+{% block content %}
+<section class="result-card">
+    <div class="result-header">
+        <div class="result-tag">GENEGUARD CARDIOVASCULAR ASSESSMENT</div>
+        <h1 class="result-title">Risk Analysis Result</h1>
+    </div>
+
+    <!-- Visual Arc Gauge -->
+    <div class="gauge-wrapper">
+        <svg class="gauge-svg" viewBox="0 0 200 120">
+            <!-- Background semi-circle arc -->
+            <path class="gauge-bg" d="M 20 100 A 80 80 0 0 1 180 100" />
+            <!-- Animated foreground fill arc -->
+            <path id="gauge-fill" class="gauge-fill {{ result.risk_category }}" 
+                  d="M 20 100 A 80 80 0 0 1 180 100" 
+                  stroke-dasharray="283" 
+                  stroke-dashoffset="283"
+                  data-probability="{{ result.risk_percentage }}" />
+        </svg>
+        <div class="gauge-value">
+            {{ result.risk_percentage }}<span>%</span>
+        </div>
+    </div>
+
+    <!-- Risk Level Badge -->
+    <div class="risk-badge {{ result.risk_category }}">
+        {{ result.risk_label }}
+    </div>
+
+    <!-- Detailed Explanation -->
+    <p class="result-explanation">
+        {{ result.risk_description }}
+    </p>
+
+    <!-- Evaluation Analysis Breakdown (SHAP Feature Attribution from CARDIO.ipynb) -->
+    {% if result.explanation %}
+    <div style="background: #ffffff; border-radius: 14px; padding: 1.5rem; max-width: 650px; margin: 0 auto 2rem; border: 1px solid #e2e8f0; text-align: left; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <h3 style="font-size: 1.1rem; color: var(--primary-navy); margin-bottom: 0.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <span>📊</span> Key Feature Evaluation & Risk Factors
+        </h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+            Feature impact attribution derived from SHAP TreeExplainer analysis on your input metrics:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            {% for item in result.explanation %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid {% if item.direction == 'increases_risk' %}#dc2626{% else %}#059669{% endif %};">
+                <span style="font-weight: 600; color: #1e293b; font-size: 0.92rem;">{{ item.feature }}</span>
+                <span class="risk-badge {% if item.direction == 'increases_risk' %}high{% else %}low{% endif %}" style="margin-bottom: 0; padding: 3px 10px; font-size: 0.75rem; border-radius: 12px;">
+                    {{ item.impact_label }} ({% if item.shap_value > 0 %}+{% endif %}{{ item.shap_value }})
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Baseline Metrics Note -->
+    <div style="background: #f8fafc; border-radius: 12px; padding: 1.25rem; max-width: 650px; margin: 0 auto 2rem; border: 1px solid #e2e8f0; text-align: left; font-size: 0.9rem; color: #475569;">
+        <div style="font-weight: 600; color: #0f172a; margin-bottom: 6px; display: flex; justify-content: space-between;">
+            <span>Model Prediction Probability:</span>
+            <span style="color: #2563eb; font-weight: 700;">{{ result.risk_percentage }}%</span>
+        </div>
+        <div style="font-weight: 600; color: #0f172a; margin-bottom: 10px; display: flex; justify-content: space-between;">
+            <span>Model Test Accuracy Baseline:</span>
+            <span>73%</span>
+        </div>
+        <p style="line-height: 1.4; color: #64748b;">
+            <em>Note:</em> The model test accuracy (73%) represents overall historical model accuracy on test validation datasets. Your prediction probability ({{ result.risk_percentage }}%) is calculated specifically from your individual input profile.
+        </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-box">
+        <form action="/report" method="POST" style="display: inline;">
+            {% for key, value in form_data.items() %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endfor %}
+            <button type="submit" class="btn-submit" style="width: auto; padding: 0.85rem 2rem;">
+                📄 Generate Health Report
+            </button>
+        </form>
+
+        <a href="/" class="btn-secondary">
+            🔄 New Assessment
+        </a>
+    </div>
+
+    <!-- Important Medical Notice -->
+    <div class="disclaimer-box" style="margin-top: 2.5rem; text-align: left;">
+        <span class="disclaimer-icon">⚠️</span>
+        <div>
+            <strong>Important Notice:</strong> This result is an AI/ML-based risk assessment for educational and informational purposes. It is <u>not</u> a clinical medical diagnosis. Always consult a licensed physician or healthcare professional for diagnostic advice.
+        </div>
+    </div>
+</section>
+{% endblock %}

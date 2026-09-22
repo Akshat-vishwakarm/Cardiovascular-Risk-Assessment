@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GeneGuard - Cardiovascular Risk Assessment{% endblock %}</title>
+    <meta name="description" content="AI/ML powered cardiovascular risk assessment platform utilizing patient health metrics.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="/" class="brand-logo">
+                <div class="brand-icon">G</div>
+                <div>
+                    <span class="brand-text">GeneGuard</span>
+                    <span class="brand-tag">ML Risk Intelligence</span>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#assessment">Start Assessment</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="main-wrapper">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="nav-container" style="justify-content: center; flex-direction: column; gap: 8px;">
+            <p><strong>GeneGuard Risk Intelligence Engine</strong> &bull; Powered by Machine Learning</p>
+            <p style="font-size: 0.8rem; opacity: 0.7;">This tool provides informational risk assessments and is not a substitute for clinical medical advice, diagnosis, or treatment.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
